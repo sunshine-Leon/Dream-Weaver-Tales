@@ -2,7 +2,10 @@ import { GoogleGenAI, Modality } from "@google/genai";
 
 // Initialize the Gemini API client
 // We use the environment variable directly as per guidelines
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// @ts-ignore
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+console.log("API Key present:", !!apiKey);
+const ai = new GoogleGenAI({ apiKey, apiVersion: 'v1beta' });
 
 export interface StoryOptions {
   animals: OptionItem[];
@@ -24,12 +27,17 @@ export interface GeneratedStory {
   imagePrompt: string;
 }
 
+function cleanJson(text: string): string {
+  // Remove markdown code blocks if present
+  return text.replace(/```json\n?|```/g, '').trim();
+}
+
 /**
  * Generates the selection options for the user.
  */
 export async function generateOptions(): Promise<StoryOptions> {
-  const model = "gemini-2.5-flash-latest"; // Fast model for JSON generation
-  
+  const model = "gemini-3-flash-preview"; // Stable model
+
   const prompt = `
     Generate a JSON object containing 4 lists for a children's story generator:
     1. 'animals': 5 cute or interesting animals.
@@ -58,8 +66,9 @@ export async function generateOptions(): Promise<StoryOptions> {
 
     const text = response.text;
     if (!text) throw new Error("No response from AI");
-    
-    return JSON.parse(text) as StoryOptions;
+
+    console.log("Options received:", text);
+    return JSON.parse(cleanJson(text)) as StoryOptions;
   } catch (error) {
     console.error("Error generating options:", error);
     // Fallback data in case of error
@@ -105,7 +114,7 @@ export async function generateStory(selections: {
   items: OptionItem[];
   styles: OptionItem[];
 }): Promise<GeneratedStory> {
-  const model = "gemini-2.5-flash-latest"; // Good for text generation
+  const model = "gemini-3-flash-preview"; // Good for text generation
 
   const animalNames = selections.animals.map(i => i.name).join(", ");
   const sceneNames = selections.scenes.map(i => i.name).join(", ");
@@ -140,7 +149,8 @@ export async function generateStory(selections: {
   const text = response.text;
   if (!text) throw new Error("Failed to generate story");
 
-  return JSON.parse(text) as GeneratedStory;
+  console.log("Story received:", text);
+  return JSON.parse(cleanJson(text)) as GeneratedStory;
 }
 
 /**
@@ -148,8 +158,8 @@ export async function generateStory(selections: {
  */
 export async function generateIllustration(imagePrompt: string): Promise<string> {
   // Use a model capable of image generation
-  const model = "gemini-2.5-flash-image"; 
-  
+  const model = "gemini-3-flash-preview"; // Fallback for image prompt analysis/generation if needed
+
   try {
     const response = await ai.models.generateContent({
       model,
@@ -168,11 +178,11 @@ export async function generateIllustration(imagePrompt: string): Promise<string>
     for (const candidate of response.candidates || []) {
       for (const part of candidate.content.parts) {
         if (part.inlineData && part.inlineData.mimeType.startsWith('image/')) {
-           return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
     }
-    
+
     throw new Error("No image found in response");
   } catch (error) {
     console.error("Error generating illustration:", error);
@@ -185,7 +195,7 @@ export async function generateIllustration(imagePrompt: string): Promise<string>
  * Generates audio for the story.
  */
 export async function generateAudio(text: string): Promise<string | null> {
-  const model = "gemini-2.5-flash-preview-tts";
+  const model = "gemini-3-flash-preview"; // Flash supports multimodal/TTS features
 
   try {
     const response = await ai.models.generateContent({
@@ -209,7 +219,7 @@ export async function generateAudio(text: string): Promise<string | null> {
     for (const candidate of response.candidates || []) {
       for (const part of candidate.content.parts) {
         if (part.inlineData && part.inlineData.mimeType.startsWith('audio/')) {
-           return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+          return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
         }
       }
     }
