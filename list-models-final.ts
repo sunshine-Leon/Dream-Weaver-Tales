@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiKey = "AIzaSyCvVl-69ExDPDEu4QriWdEPwEdd7lLw7Oc";
+const apiKey = "AIzaSyAa3JDBaWjcXmHNxivXXrxNpTjU4FZkwhE";
 
 async function run() {
     const versions = ['v1', 'v1beta'];

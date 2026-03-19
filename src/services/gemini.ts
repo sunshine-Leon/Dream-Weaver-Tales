@@ -195,7 +195,7 @@ export async function generateIllustration(imagePrompt: string): Promise<string>
  * Generates audio for the story.
  */
 export async function generateAudio(text: string): Promise<string | null> {
-  const model = "gemini-3-flash-preview"; // Flash supports multimodal/TTS features
+  const model = "gemini-3-flash-latest"; // Flash supports multimodal/TTS features
 
   try {
     const response = await ai.models.generateContent({
