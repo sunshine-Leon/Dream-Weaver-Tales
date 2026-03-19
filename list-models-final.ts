@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiKey = "AIzaSyAa3JDBaWjcXmHNxivXXrxNpTjU4FZkwhE";
+const apiKey = process.env.VITE_GEMINI_API_KEY;
 
 async function run() {
     const versions = ['v1', 'v1beta'];
